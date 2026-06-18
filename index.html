@@ -78,30 +78,6 @@ body::before {
     opacity: 0.25;
 }
 
-player = new YT.Player('player', {
-    width: '560',
-    height: '315',
-
-    videoId: videos[indice],
-
-    playerVars: {
-        autoplay: 1,
-        controls: 1,
-        rel: 0
-    },
-
-    events: {
-        'onReady': onPlayerReady,
-        'onStateChange': onPlayerStateChange
-    }
-});
-
-function onPlayerReady(event) {
-
-    event.target.mute();
-    event.target.playVideo();
-}
-
 </style>
 </head>
 
