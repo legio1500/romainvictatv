@@ -12,7 +12,9 @@
 
 <style>
 
+
 body {
+
     margin: 0;
     display: flex;
     justify-content: center;
@@ -23,7 +25,9 @@ body {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-	
+	font-family: 'Cinzel', serif;
+	 position: relative;
+	 
 }
 
 
@@ -40,15 +44,12 @@ body::before {
 
 /* Conteúdo acima da camada escura */
 #player {
-    width: 560px;
-    height: 315px;
+    width: 700px;
+    height: 394px;
 
     position: relative;
     z-index: 2;
-
-    border: 8px solid white;
-    border-radius: 20px;
-
+    border-radius: 18px;
     overflow: hidden;
 
     box-shadow:
@@ -56,15 +57,44 @@ body::before {
         0 0 40px rgba(0,0,0,0.6);
 }
 
+#player-container {
+    padding: 15px;
+
+    background: rgba(255,255,255,0.08);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    border-radius: 25px;
+
+    position: relative;
+    z-index: 2;
+
+    opacity: 1;
+    transition: opacity 1s ease;
+}
+
+#player-container.oculto {
+    opacity: 0.25;
+}
+
+
 
 </style>
 </head>
 
 <body>
 
-<div id="player"></div>
 
-<script src="https://www.youtube.com/iframe_api"></script>
+<div id="player-container">
+<div id="player"></div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api">
+
+</script>
+
+
 
 <script>
 
@@ -110,6 +140,34 @@ function onPlayerStateChange(event) {
         player.loadVideoById(videos[indice]);
     }
 }
+
+</script>
+
+<script>
+
+let temporizadorMouse;
+
+const container = document.getElementById("player-container");
+
+container.addEventListener("mouseenter", () => {
+
+    container.classList.remove("oculto");
+
+    clearTimeout(temporizadorMouse);
+
+});
+
+container.addEventListener("mouseleave", () => {
+
+    clearTimeout(temporizadorMouse);
+
+    temporizadorMouse = setTimeout(() => {
+
+        container.classList.add("oculto");
+
+    }, 2000);
+
+});
 
 </script>
 
