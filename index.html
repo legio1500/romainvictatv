@@ -855,6 +855,11 @@
             { label: "∞ Unlimited", seconds: Infinity }
         ];
 
+        // ====== ALL VIDEOS EXCLUDING AUDIOBOOKS ======
+        function getAllVideosExcludingAudiobooks() {
+            return videoList.filter(v => !v.categories.includes('audiobook'));
+        }
+
         // ====== FILTER STATE ======
         let selectedCategories = new Set();
         let selectedDuration = Infinity;
@@ -866,6 +871,7 @@
         let statusOriginal = '';
         let soundActivated = false;
         let hasActiveFilters = false;
+        let isInitialized = false;
 
         // ====== SHUFFLE ======
         function shuffleArray(array) {
@@ -1049,8 +1055,8 @@
         function onYouTubeIframeAPIReady() {
             console.log('🎬 YouTube API ready');
 
-            // Inicializar com vídeos aleatórios (excluindo audiobooks)
-            const initialVideos = videoList.filter(v => !v.categories.includes('audiobook'));
+            // Carregar todos os vídeos exceto audiobooks
+            const initialVideos = getAllVideosExcludingAudiobooks();
 
             if (initialVideos.length === 0) {
                 document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS AVAILABLE';
@@ -1060,16 +1066,20 @@
                 return;
             }
 
-            // Embaralhar e pegar um aleatório
+            // Embaralhar a lista completa
             shuffleArray(initialVideos);
             filteredVideos = initialVideos;
             hasActiveFilters = true;
             currentFilteredIndex = 0;
+            isInitialized = true;
 
             document.getElementById('video-counter').textContent = '1';
             document.getElementById('total-counter').textContent = filteredVideos.length;
+            document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
+            document.getElementById('status').className = '';
+            statusOriginal = '▶ <span>●</span> PLAYING';
 
-            console.log(`🎬 Starting with random video (no filters selected, excluding audiobooks)`);
+            console.log(`🎬 Starting with ${filteredVideos.length} random videos (excluding audiobooks)`);
 
             // Carregar o primeiro vídeo
             if (playerReady && player) {
@@ -1245,8 +1255,6 @@
                 } else {
                     selectedCategories.delete(cat);
                 }
-                // Se alguma categoria foi selecionada, aplica os filtros
-                // Se nenhuma, para o player (já tratado no applyFilters)
                 applyFilters();
             });
         });
@@ -1298,21 +1306,23 @@
             durationValue.textContent = '∞ Unlimited';
 
             // Voltar para o estado inicial: vídeos aleatórios (excluindo audiobooks)
-            const initialVideos = videoList.filter(v => !v.categories.includes('audiobook'));
+            const initialVideos = getAllVideosExcludingAudiobooks();
             if (initialVideos.length > 0) {
                 shuffleArray(initialVideos);
                 filteredVideos = initialVideos;
                 hasActiveFilters = true;
                 currentFilteredIndex = 0;
+                isInitialized = true;
                 updateUI();
+                document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
+                document.getElementById('status').className = '';
+                statusOriginal = '▶ <span>●</span> PLAYING';
                 if (playerReady && player) {
                     loadFilteredVideo(0);
                 } else {
                     window.pendingVideoIndex = 0;
                     if (!player) initPlayer();
                 }
-                document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
-                document.getElementById('status').className = '';
             } else {
                 filteredVideos = [];
                 hasActiveFilters = false;
