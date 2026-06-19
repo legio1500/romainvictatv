@@ -262,7 +262,7 @@
             overflow: hidden;
             box-shadow: 0 0 30px rgba(200, 0, 0, 0.15);
             display: block;
-            background: #000;
+            background: #0a0a0a;
             min-height: 200px;
         }
 
@@ -720,8 +720,8 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // ====== FALLBACK VIDEOLIST (caso o arquivo não carregue) ======
-        const FALLBACK_VIDEOS = [
+        // ====== HARDCODED VIDEOLIST (direto no código, sem depender de TXT) ======
+        const videoList = [
             { url: "https://www.youtube.com/watch?v=yDFAikbi0wE", videoId: "yDFAikbi0wE", creator: "HeleenUytterhoeven(Heloon)", duration: "2m59s", durationSeconds: 179, categories: ["cover"] },
             { url: "https://www.youtube.com/watch?v=SfiwOMzFfSM", videoId: "SfiwOMzFfSM", creator: "HeleenUytterhoeven(Heloon)", duration: "3m1s", durationSeconds: 181, categories: ["cover"] },
             { url: "https://www.youtube.com/watch?v=LUhd4GzJvmg", videoId: "LUhd4GzJvmg", creator: "VAERKO", duration: "3m22s", durationSeconds: 202, categories: ["musicother"] },
@@ -729,7 +729,13 @@
             { url: "https://www.youtube.com/watch?v=1kfxiX5aIZc", videoId: "1kfxiX5aIZc", creator: "Ianthis", duration: "1m33s", durationSeconds: 93, categories: ["sungpoetry"] },
             { url: "https://www.youtube.com/watch?v=HKdoM35oJCA", videoId: "HKdoM35oJCA", creator: "Ianthis", duration: "1m38s", durationSeconds: 98, categories: ["sungpoetry"] },
             { url: "https://www.youtube.com/watch?v=nihv4HWHVVY", videoId: "nihv4HWHVVY", creator: "Salve,Latina!", duration: "3m42s", durationSeconds: 222, categories: ["audiobook", "proseepistolary"] },
-            { url: "https://www.youtube.com/watch?v=Xg0TyMElq8s", videoId: "Xg0TyMElq8s", creator: "ScorpioMartianus", duration: "1m11s", durationSeconds: 71, categories: ["recitedpoetry"] }
+            { url: "https://www.youtube.com/watch?v=Xg0TyMElq8s", videoId: "Xg0TyMElq8s", creator: "ScorpioMartianus", duration: "1m11s", durationSeconds: 71, categories: ["recitedpoetry"] },
+            { url: "https://www.youtube.com/watch?v=46xqOsG_r5A", videoId: "46xqOsG_r5A", creator: "Ianthis", duration: "2m5s", durationSeconds: 125, categories: ["sungpoetry"] },
+            { url: "https://www.youtube.com/watch?v=1FzdlwOWoJc", videoId: "1FzdlwOWoJc", creator: "Canta el Aedo", duration: "4m18s", durationSeconds: 258, categories: ["cover"] },
+            { url: "https://www.youtube.com/watch?v=aDA-6hX11xc", videoId: "aDA-6hX11xc", creator: "tyrtarion-Topic", duration: "3m18s", durationSeconds: 198, categories: ["recitedpoetry"] },
+            { url: "https://www.youtube.com/watch?v=912wxUW0nhk", videoId: "912wxUW0nhk", creator: "tyrtarion-Topic", duration: "1m16s", durationSeconds: 76, categories: ["audiobook"] },
+            { url: "https://www.youtube.com/watch?v=U-jH5VgV3VI", videoId: "U-jH5VgV3VI", creator: "tyrtarion-Topic", duration: "2m33s", durationSeconds: 153, categories: ["musicother"] },
+            { url: "https://www.youtube.com/watch?v=_uJIfiQzjAQ", videoId: "_uJIfiQzjAQ", creator: "tyrtarion-Topic", duration: "2m1s", durationSeconds: 121, categories: ["sungpoetry"] }
         ];
 
         // ====== RANDOM BACKGROUND ======
@@ -766,71 +772,16 @@
             { label: "∞ Unlimited", seconds: Infinity }
         ];
 
-        // ====== PARSE DURATION STRING ======
-        function parseDuration(durationStr) {
-            const match = durationStr.match(/(?:(\d+)m)?(?:(\d+)s)?/);
-            if (!match) return 0;
-            const minutes = parseInt(match[1]) || 0;
-            const seconds = parseInt(match[2]) || 0;
-            return minutes * 60 + seconds;
-        }
-
-        // ====== PARSE VIDEOLIST.TXT ======
-        function parseVideoList(text) {
-            const lines = text.split('\n').filter(line => line.trim() !== '');
-            const videos = [];
-
-            for (const line of lines) {
-                const parts = line.split('|').map(p => p.trim());
-                if (parts.length < 4) continue;
-
-                const url = parts[0];
-                const creator = parts[1].replace('@', '');
-                const durationStr = parts[2];
-                const categories = [];
-
-                for (let i = 3; i < parts.length; i++) {
-                    if (parts[i]) {
-                        categories.push(parts[i]);
-                    }
-                }
-
-                const durationSeconds = parseDuration(durationStr);
-                const videoId = extractVideoId(url);
-
-                if (videoId) {
-                    videos.push({
-                        url: url,
-                        videoId: videoId,
-                        creator: creator,
-                        duration: durationStr,
-                        durationSeconds: durationSeconds,
-                        categories: categories
-                    });
-                }
-            }
-
-            return videos;
-        }
-
-        // ====== EXTRACT VIDEO ID ======
-        function extractVideoId(url) {
-            const match = url.match(/youtube\.com\/watch\?v=([^&]+)/);
-            return match ? match[1] : null;
-        }
-
         // ====== FILTER STATE ======
         let selectedCategories = new Set();
         let selectedDuration = Infinity;
         let filteredVideos = [];
         let currentFilteredIndex = 0;
-        let videoList = [];
         let playerReady = false;
         let player = null;
         let messageActive = false;
         let statusOriginal = '';
         let soundActivated = false;
-        let dataLoaded = false;
 
         // ====== SHUFFLE ARRAY ======
         function shuffleArray(array) {
@@ -871,47 +822,13 @@
             }
         }
 
-        // ====== LOAD VIDEOLIST.TXT ======
-        function loadVideoList() {
-            fetch('videolist.txt')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Could not load videolist.txt');
-                    }
-                    return response.text();
-                })
-                .then(text => {
-                    const parsed = parseVideoList(text);
-                    if (parsed.length > 0) {
-                        videoList = parsed;
-                        console.log(`📋 Loaded ${videoList.length} videos from videolist.txt`);
-                    } else {
-                        console.warn('⚠️ videolist.txt parsed but empty, using fallback');
-                        videoList = FALLBACK_VIDEOS;
-                    }
-                    dataLoaded = true;
-                    applyFilters();
-                    initPlayerIfReady();
-                })
-                .catch(error => {
-                    console.error('Error loading videolist.txt:', error);
-                    console.warn('⚠️ Using fallback video list');
-                    videoList = FALLBACK_VIDEOS;
-                    dataLoaded = true;
-                    applyFilters();
-                    initPlayerIfReady();
-                });
-        }
-
         // ====== APPLY FILTERS ======
         function applyFilters() {
             const hasCategoryFilter = selectedCategories.size > 0;
             const hasDurationFilter = selectedDuration !== Infinity;
 
-            // If no categories selected, show all videos (including audiobooks)
             if (!hasCategoryFilter) {
                 filteredVideos = videoList.filter(video => {
-                    // Duration filter - Audiobook ignores duration
                     if (hasDurationFilter && !video.categories.includes('audiobook')) {
                         if (video.durationSeconds > selectedDuration) return false;
                     }
@@ -919,11 +836,9 @@
                 });
             } else {
                 filteredVideos = videoList.filter(video => {
-                    // Category filter (OR logic)
                     const matchesCategory = video.categories.some(cat => selectedCategories.has(cat));
                     if (!matchesCategory) return false;
 
-                    // Duration filter - Audiobook ignores duration
                     if (hasDurationFilter && !video.categories.includes('audiobook')) {
                         if (video.durationSeconds > selectedDuration) return false;
                     }
@@ -932,10 +847,9 @@
                 });
             }
 
-            // Shuffle the filtered list
             shuffleArray(filteredVideos);
 
-            console.log(`📊 Filtered: ${filteredVideos.length} videos (from ${videoList.length})`);
+            console.log(`📊 Filtered: ${filteredVideos.length} videos`);
 
             if (filteredVideos.length === 0) {
                 document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS MATCH FILTERS';
@@ -947,7 +861,6 @@
             currentFilteredIndex = 0;
             updateUI();
 
-            // Load the first video if player is ready
             if (playerReady && player) {
                 loadFilteredVideo(0);
             } else {
@@ -958,47 +871,12 @@
         // ====== UPDATE UI ======
         function updateUI() {
             if (filteredVideos.length === 0) {
-                document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS MATCH FILTERS';
                 document.getElementById('video-counter').textContent = '0';
                 document.getElementById('total-counter').textContent = '0';
                 return;
             }
-
             document.getElementById('video-counter').textContent = currentFilteredIndex + 1;
             document.getElementById('total-counter').textContent = filteredVideos.length;
-        }
-
-        // ====== INIT PLAYER IF READY ======
-        function initPlayerIfReady() {
-            if (dataLoaded && filteredVideos.length > 0) {
-                // Check for saved progress
-                const saved = loadProgress();
-                let startIndex = 0;
-
-                if (saved && saved.date === todayDate) {
-                    startIndex = Math.min(saved.index, filteredVideos.length - 1);
-                    console.log(`🔄 Restoring progress: video ${startIndex + 1}/${filteredVideos.length}`);
-                } else if (saved && saved.date !== todayDate) {
-                    console.log(`📅 Different day. Starting from beginning.`);
-                    localStorage.removeItem(STORAGE_KEY);
-                }
-
-                currentFilteredIndex = startIndex;
-                const video = filteredVideos[startIndex];
-
-                document.getElementById('video-counter').textContent = startIndex + 1;
-                document.getElementById('total-counter').textContent = filteredVideos.length;
-
-                console.log(`🎬 Starting with filtered video ${startIndex + 1}/${filteredVideos.length}: ${video.videoId}`);
-
-                window.initialVideoId = video.videoId;
-                window.pendingVideoIndex = startIndex;
-
-                // If player is already ready, load the video
-                if (playerReady && player) {
-                    loadFilteredVideo(startIndex);
-                }
-            }
         }
 
         // ====== LOAD FILTERED VIDEO ======
@@ -1017,13 +895,17 @@
             document.getElementById('video-counter').textContent = currentFilteredIndex + 1;
             document.getElementById('total-counter').textContent = filteredVideos.length;
 
-            console.log(`🎬 Loading filtered video ${currentFilteredIndex + 1}/${filteredVideos.length}: ${video.videoId}`);
+            console.log(`🎬 Loading video: ${video.videoId}`);
 
             if (playerReady && player) {
                 player.loadVideoById(video.videoId);
                 player.playVideo();
             } else {
                 window.pendingVideoIndex = currentFilteredIndex;
+                // Try to initialize player if not ready
+                if (!player) {
+                    initPlayer();
+                }
             }
 
             const statusElement = document.getElementById('status');
@@ -1037,45 +919,40 @@
         // ====== LOAD NEXT / PREVIOUS ======
         function loadNextFilteredVideo() {
             if (filteredVideos.length === 0) return;
-            if (playerReady && player) {
-                saveCurrentProgress();
-            }
+            if (playerReady && player) saveCurrentProgress();
             loadFilteredVideo(currentFilteredIndex + 1);
         }
 
         function loadPreviousFilteredVideo() {
             if (filteredVideos.length === 0) return;
-            if (playerReady && player) {
-                saveCurrentProgress();
-            }
+            if (playerReady && player) saveCurrentProgress();
             loadFilteredVideo(currentFilteredIndex - 1);
         }
 
         // ====== SAVE CURRENT PROGRESS ======
         function saveCurrentProgress() {
             if (playerReady && player && player.getCurrentTime) {
-                const currentTime = player.getCurrentTime();
-                saveProgress(currentFilteredIndex, currentTime);
+                saveProgress(currentFilteredIndex, player.getCurrentTime());
             } else {
                 saveProgress(currentFilteredIndex, 0);
             }
         }
 
-        // ====== YOUTUBE IFrame API ======
-        function onYouTubeIframeAPIReady() {
-            console.log('🎬 YouTube API loaded!');
-
+        // ====== INIT PLAYER ======
+        function initPlayer() {
             if (filteredVideos.length === 0) {
-                // Try to load the video list first
-                if (!dataLoaded) {
-                    console.log('⏳ Waiting for video list to load...');
-                    return;
-                }
-                document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS MATCH FILTERS';
+                console.warn('No videos to play');
                 return;
             }
 
-            const videoId = window.initialVideoId || filteredVideos[0].videoId;
+            const videoId = filteredVideos[0].videoId;
+            console.log(`🎬 Initializing player with: ${videoId}`);
+
+            if (player) {
+                player.loadVideoById(videoId);
+                player.playVideo();
+                return;
+            }
 
             player = new YT.Player('player', {
                 width: '560',
@@ -1098,8 +975,13 @@
                     'onError': onPlayerError
                 }
             });
+        }
 
-            console.log(`✅ Player initializing with video: ${videoId}`);
+        // ====== YOUTUBE IFrame API ======
+        function onYouTubeIframeAPIReady() {
+            console.log('🎬 YouTube API loaded!');
+            applyFilters();
+            initPlayer();
         }
 
         // ====== PLAYER READY ======
@@ -1109,10 +991,12 @@
 
             if (window.pendingVideoIndex !== undefined && window.pendingVideoIndex !== null) {
                 const index = window.pendingVideoIndex;
-                const video = filteredVideos[index];
-                if (video) {
-                    player.loadVideoById(video.videoId);
-                    player.playVideo();
+                if (index < filteredVideos.length) {
+                    const video = filteredVideos[index];
+                    if (video) {
+                        player.loadVideoById(video.videoId);
+                        player.playVideo();
+                    }
                 }
                 window.pendingVideoIndex = undefined;
             }
@@ -1124,24 +1008,21 @@
                 statusOriginal = statusElement.innerHTML;
             }
 
-            setTimeout(() => {
-                saveCurrentProgress();
-            }, 3000);
+            setTimeout(() => saveCurrentProgress(), 3000);
         }
 
         // ====== PLAYER STATE CHANGE ======
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.PLAYING) {
                 if (!messageActive) {
-                    const statusElement = document.getElementById('status');
-                    statusElement.innerHTML = '▶ <span>●</span> PLAYING';
-                    statusElement.className = '';
-                    statusOriginal = statusElement.innerHTML;
+                    document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
+                    document.getElementById('status').className = '';
+                    statusOriginal = '▶ <span>●</span> PLAYING';
                 }
             }
 
             if (event.data === YT.PlayerState.ENDED) {
-                console.log('📯 Video ended. Advancing to next...');
+                console.log('📯 Video ended. Advancing...');
                 saveCurrentProgress();
                 loadNextFilteredVideo();
             }
@@ -1155,15 +1036,13 @@
             }
         }
 
-        // ====== PLAYER ERROR HANDLER ======
+        // ====== PLAYER ERROR ======
         function onPlayerError(event) {
             console.log('⚠️ Player error:', event.data);
-
             if (!messageActive) {
-                document.getElementById('status').innerHTML = '⚠️ <span>●</span> ERROR - Next video...';
+                document.getElementById('status').innerHTML = '⚠️ <span>●</span> ERROR - Next...';
                 document.getElementById('status').className = '';
             }
-
             setTimeout(() => {
                 saveCurrentProgress();
                 loadNextFilteredVideo();
@@ -1175,10 +1054,8 @@
             if (playerReady && player && !soundActivated) {
                 player.unMute();
                 soundActivated = true;
-
-                const button = document.getElementById('audio-toggle');
-                button.classList.add('audio-activated');
-                button.style.display = 'none';
+                document.getElementById('audio-toggle').classList.add('audio-activated');
+                document.getElementById('audio-toggle').style.display = 'none';
 
                 const statusElement = document.getElementById('status');
                 statusElement.innerHTML = '🔊 <span>●</span> AUDIO ENABLED';
@@ -1190,63 +1067,50 @@
                         statusElement.className = '';
                     }
                 }, 2000);
-
-                console.log('✅ Audio activated on mobile!');
+                console.log('✅ Audio activated!');
             }
         }
 
         // ====== SHOW AUDIO MESSAGE ======
         function showAudioMessage() {
             messageActive = true;
-
             const statusElement = document.getElementById('status');
             statusOriginal = statusElement.innerHTML;
-
             statusElement.innerHTML = '🔊 <span>●</span> ENABLE AUDIO ON PLAYER';
             statusElement.className = 'audio-message';
-
             document.title = '🔊 ENABLE AUDIO ON PLAYER';
 
             const titleElement = document.getElementById('titulo');
             titleElement.innerHTML = '🔊 <span>ENABLE</span> AUDIO';
             titleElement.className = 'audio-message';
 
-            const button = document.getElementById('audio-toggle');
             if (window.innerWidth <= 768) {
-                button.style.display = 'block';
-                button.classList.add('muted');
+                document.getElementById('audio-toggle').style.display = 'block';
+                document.getElementById('audio-toggle').classList.add('muted');
             }
 
-            setTimeout(() => {
-                returnToNormal();
-            }, 15000);
+            setTimeout(returnToNormal, 15000);
         }
 
         // ====== RETURN TO NORMAL ======
         function returnToNormal() {
             messageActive = false;
-
-            const statusElement = document.getElementById('status');
-            statusElement.innerHTML = '▶ <span>●</span> PLAYING';
-            statusElement.className = '';
-
+            document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
+            document.getElementById('status').className = '';
             document.title = 'Roma Invicta TV';
-
-            const titleElement = document.getElementById('titulo');
-            titleElement.innerHTML = '<span>Roma</span> Invicta TV';
-            titleElement.className = '';
+            document.getElementById('titulo').innerHTML = '<span>Roma</span> Invicta TV';
+            document.getElementById('titulo').className = '';
 
             if (soundActivated) {
-                const button = document.getElementById('audio-toggle');
-                button.style.display = 'none';
+                document.getElementById('audio-toggle').style.display = 'none';
             }
 
             if (playerReady && player && player.getPlayerState) {
                 const state = player.getPlayerState();
                 if (state === YT.PlayerState.PLAYING) {
-                    statusElement.innerHTML = '▶ <span>●</span> PLAYING';
+                    document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
                 } else if (state === YT.PlayerState.PAUSED) {
-                    statusElement.innerHTML = '⏸ <span>●</span> PAUSED';
+                    document.getElementById('status').innerHTML = '⏸ <span>●</span> PAUSED';
                 }
             }
         }
@@ -1254,12 +1118,10 @@
         // ====== HIDE ON MOUSE LEAVE ======
         let mouseTimer;
         const container = document.getElementById("player-container");
-
         container.addEventListener("mouseenter", () => {
             container.classList.remove("oculto");
             clearTimeout(mouseTimer);
         });
-
         container.addEventListener("mouseleave", () => {
             clearTimeout(mouseTimer);
             mouseTimer = setTimeout(() => {
@@ -1267,20 +1129,13 @@
             }, 2000);
         });
 
-        // ====== AUTOPLAY FALLBACK ======
-        setTimeout(() => {
-            if (playerReady && player && player.getPlayerState && player.getPlayerState() === -1) {
-                player.playVideo();
-            }
-        }, 3000);
-
         // ====== INITIALIZE ======
         window.addEventListener('load', function() {
-            loadVideoList();
-
-            setTimeout(() => {
-                showAudioMessage();
-            }, 1500);
+            applyFilters();
+            if (!player) {
+                initPlayer();
+            }
+            setTimeout(showAudioMessage, 1500);
         });
 
         // ====== SAVE PROGRESS REGULARLY ======
@@ -1290,29 +1145,22 @@
             }
         }, 5000);
 
-        // ====== SAVE PROGRESS BEFORE PAGE UNLOADS ======
-        window.addEventListener('beforeunload', function() {
-            if (playerReady && player) {
-                saveCurrentProgress();
-            }
+        window.addEventListener('beforeunload', () => {
+            if (playerReady && player) saveCurrentProgress();
         });
 
         // ====== NAVIGATION BUTTONS ======
         document.getElementById('next-button').addEventListener('click', loadNextFilteredVideo);
         document.getElementById('prev-button').addEventListener('click', loadPreviousFilteredVideo);
 
-        // ====== MOBILE BUTTON EVENT ======
         document.getElementById('audio-toggle').addEventListener('click', activateAudio);
 
         // ====== KEYBOARD SHORTCUTS ======
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                loadNextFilteredVideo();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                loadPreviousFilteredVideo();
-            }
+            if (e.key === 'ArrowRight') { e.preventDefault();
+                loadNextFilteredVideo(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault();
+                loadPreviousFilteredVideo(); }
         });
 
         // ====== SIDEBAR COLLAPSE ======
@@ -1330,24 +1178,14 @@
         document.querySelectorAll('.category-item input[type="checkbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const category = this.dataset.category;
-                if (this.checked) {
-                    selectedCategories.add(category);
-                } else {
-                    selectedCategories.delete(category);
-                }
+                if (this.checked) selectedCategories.add(category);
+                else selectedCategories.delete(category);
                 applyFilters();
-                if (filteredVideos.length > 0) {
-                    currentFilteredIndex = 0;
-                    if (playerReady && player) {
-                        loadFilteredVideo(0);
-                    } else {
-                        window.pendingVideoIndex = 0;
-                    }
-                }
+                if (filteredVideos.length > 0 && playerReady) loadFilteredVideo(0);
             });
         });
 
-        // ====== DURATION FILTER EVENTS ======
+        // ====== DURATION FILTER ======
         const durationSlider = document.getElementById('duration-slider');
         const durationValue = document.getElementById('duration-value');
 
@@ -1358,46 +1196,26 @@
                 selectedDuration = preset.seconds;
                 durationValue.textContent = preset.label;
                 applyFilters();
-                if (filteredVideos.length > 0) {
-                    currentFilteredIndex = 0;
-                    if (playerReady && player) {
-                        loadFilteredVideo(0);
-                    } else {
-                        window.pendingVideoIndex = 0;
-                    }
-                }
+                if (filteredVideos.length > 0 && playerReady) loadFilteredVideo(0);
             }
         });
 
         // ====== RESET FILTERS ======
         document.getElementById('reset-filters').addEventListener('click', function() {
-            document.querySelectorAll('.category-item input[type="checkbox"]').forEach(cb => {
-                cb.checked = false;
-            });
+            document.querySelectorAll('.category-item input[type="checkbox"]').forEach(cb => cb.checked = false);
             selectedCategories.clear();
-
             durationSlider.value = durationPresets.length - 1;
             selectedDuration = Infinity;
             durationValue.textContent = '∞ Unlimited';
-
             applyFilters();
-            if (filteredVideos.length > 0) {
-                currentFilteredIndex = 0;
-                if (playerReady && player) {
-                    loadFilteredVideo(0);
-                } else {
-                    window.pendingVideoIndex = 0;
-                }
-            }
+            if (filteredVideos.length > 0 && playerReady) loadFilteredVideo(0);
         });
 
-        // ====== DETECT WINDOW RESIZE ======
         window.addEventListener('resize', function() {
-            const button = document.getElementById('audio-toggle');
             if (window.innerWidth <= 768 && !soundActivated && messageActive) {
-                button.style.display = 'block';
+                document.getElementById('audio-toggle').style.display = 'block';
             } else if (window.innerWidth > 768 || soundActivated) {
-                button.style.display = 'none';
+                document.getElementById('audio-toggle').style.display = 'none';
             }
         });
     </script>
