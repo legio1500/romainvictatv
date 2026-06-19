@@ -867,11 +867,6 @@
         let soundActivated = false;
         let hasActiveFilters = false;
 
-        // ====== ALL CATEGORIES (excluindo audiobook para a seleção inicial) ======
-        const ALL_CATEGORIES_EXCEPT_AUDIOBOOK = ['prosehistory', 'prosespeech', 'proseepistolary', 'recitedpoetry',
-            'sungpoetry', 'cover', 'musicother'
-        ];
-
         // ====== SHUFFLE ======
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -1054,25 +1049,34 @@
         function onYouTubeIframeAPIReady() {
             console.log('🎬 YouTube API ready');
 
-            // Inicializar com TODAS as categorias (exceto audiobook) selecionadas
-            selectedCategories = new Set(ALL_CATEGORIES_EXCEPT_AUDIOBOOK);
+            // Inicializar com vídeos aleatórios (excluindo audiobooks)
+            const initialVideos = videoList.filter(v => !v.categories.includes('audiobook'));
 
-            // Marcar os checkboxes visualmente
-            document.querySelectorAll('.category-item input[type="checkbox"]').forEach(cb => {
-                const cat = cb.dataset.category;
-                if (selectedCategories.has(cat)) {
-                    cb.checked = true;
-                }
-            });
-
-            applyFilters();
-
-            // Se não tiver vídeos, mostra mensagem
-            if (filteredVideos.length === 0) {
+            if (initialVideos.length === 0) {
                 document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS AVAILABLE';
                 document.getElementById('status').className = '';
                 document.getElementById('video-counter').textContent = '0';
                 document.getElementById('total-counter').textContent = '0';
+                return;
+            }
+
+            // Embaralhar e pegar um aleatório
+            shuffleArray(initialVideos);
+            filteredVideos = initialVideos;
+            hasActiveFilters = true;
+            currentFilteredIndex = 0;
+
+            document.getElementById('video-counter').textContent = '1';
+            document.getElementById('total-counter').textContent = filteredVideos.length;
+
+            console.log(`🎬 Starting with random video (no filters selected, excluding audiobooks)`);
+
+            // Carregar o primeiro vídeo
+            if (playerReady && player) {
+                loadFilteredVideo(0);
+            } else {
+                window.pendingVideoIndex = 0;
+                if (!player) initPlayer();
             }
         }
 
@@ -1196,7 +1200,6 @@
 
         // ====== INIT ======
         window.addEventListener('load', function() {
-            // A inicialização agora é feita no onYouTubeIframeAPIReady
             setTimeout(showAudioMessage, 1500);
         });
 
@@ -1242,6 +1245,8 @@
                 } else {
                     selectedCategories.delete(cat);
                 }
+                // Se alguma categoria foi selecionada, aplica os filtros
+                // Se nenhuma, para o player (já tratado no applyFilters)
                 applyFilters();
             });
         });
@@ -1249,10 +1254,8 @@
         // ====== SELECT ALL ======
         document.getElementById('select-all-btn').addEventListener('click', function() {
             const checkboxes = document.querySelectorAll('.category-item input[type="checkbox"]');
-            // Verifica se todos estão marcados
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
 
-            // Se todos estão marcados, desmarca todos. Senão, marca todos.
             checkboxes.forEach(cb => {
                 cb.checked = !allChecked;
                 const cat = cb.dataset.category;
@@ -1283,18 +1286,41 @@
 
         // ====== RESET FILTERS ======
         document.getElementById('reset-filters').addEventListener('click', function() {
-            // Resetar para o estado inicial: todas as categorias (exceto audiobook) marcadas
-            selectedCategories = new Set(ALL_CATEGORIES_EXCEPT_AUDIOBOOK);
+            // Desmarcar todos os checkboxes
             document.querySelectorAll('.category-item input[type="checkbox"]').forEach(cb => {
-                const cat = cb.dataset.category;
-                cb.checked = selectedCategories.has(cat);
+                cb.checked = false;
             });
+            selectedCategories.clear();
 
+            // Resetar duração
             durationSlider.value = durationPresets.length - 1;
             selectedDuration = Infinity;
             durationValue.textContent = '∞ Unlimited';
 
-            applyFilters();
+            // Voltar para o estado inicial: vídeos aleatórios (excluindo audiobooks)
+            const initialVideos = videoList.filter(v => !v.categories.includes('audiobook'));
+            if (initialVideos.length > 0) {
+                shuffleArray(initialVideos);
+                filteredVideos = initialVideos;
+                hasActiveFilters = true;
+                currentFilteredIndex = 0;
+                updateUI();
+                if (playerReady && player) {
+                    loadFilteredVideo(0);
+                } else {
+                    window.pendingVideoIndex = 0;
+                    if (!player) initPlayer();
+                }
+                document.getElementById('status').innerHTML = '▶ <span>●</span> PLAYING';
+                document.getElementById('status').className = '';
+            } else {
+                filteredVideos = [];
+                hasActiveFilters = false;
+                updateUI();
+                stopPlayer();
+                document.getElementById('status').innerHTML = '⏸ <span>●</span> NO VIDEOS AVAILABLE';
+                document.getElementById('status').className = '';
+            }
         });
     </script>
 
